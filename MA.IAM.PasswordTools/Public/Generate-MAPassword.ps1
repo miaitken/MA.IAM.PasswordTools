@@ -27,37 +27,36 @@ function Generate-Password {
 
         [Parameter(Mandatory = $true)]
         [ValidateRange(0, [int]::MaxValue)]
-        [int]$SpecChar
+        [int]$SpecialCharacters
     )
 
-    if ($SpecChar -gt $Length) {
+    if ($SpecialCharacters -gt $Length) {
         throw "The number of special characters cannot exceed the total password length."
     }
 
     Add-Type -TypeDefinition @"
 using System;
-using System.Text;
 using System.Security.Cryptography;
 using System.Linq;
 
 public class PasswordGenerator {
     private static readonly char[] Alphanumerics = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".ToCharArray();
-    private static readonly char[] SpecialCharacters = "!@#$%^*()_-+=?".ToCharArray();
+    private static readonly char[] nonAlphanumericChars = "!@#$%^*()_-+=?".ToCharArray();
 
-    public static string Generate(int length, int nonAlphanumericChars) {
-        if (nonAlphanumericChars > length) throw new ArgumentException("Too many special characters requested.");
+    public static string Generate(int length, int specialCharacters) {
+        if (specialCharacters > length) throw new ArgumentException("Too many special characters requested.");
         var chars = new char[length];
         int i = 0;
-        for (; i < length - nonAlphanumericChars; i++) {
+        for (; i < length - specialCharacters; i++) {
             chars[i] = Alphanumerics[RandomNumberGenerator.GetInt32(Alphanumerics.Length)];
         }
         for (; i < length; i++) {
-            chars[i] = SpecialCharacters[RandomNumberGenerator.GetInt32(SpecialCharacters.Length)];
+            chars[i] = nonAlphanumericChars[RandomNumberGenerator.GetInt32(nonAlphanumericChars.Length)];
         }
         return new string(chars.OrderBy(c => RandomNumberGenerator.GetInt32(int.MaxValue)).ToArray());
     }
 }
 "@
 
-    return [PasswordGenerator]::Generate($Length, $SpecChar)
+    return [PasswordGenerator]::Generate($Length, $SpecialCharacters)
 }
